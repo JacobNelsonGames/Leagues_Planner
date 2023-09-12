@@ -4,16 +4,16 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
-@ConfigGroup("example")
-public interface ExampleConfig extends Config
+@ConfigGroup("LeaguePlanner")
+public interface LeaguesPlannerConfig extends Config
 {
 	@ConfigItem(
 		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+		name = "Posiedien's Leagues Planner",
+		description = "This plugin is for setting up your perfect league's plan"
 	)
 	default String greeting()
 	{
-		return "Hello";
+		return "";
 	}
 }
