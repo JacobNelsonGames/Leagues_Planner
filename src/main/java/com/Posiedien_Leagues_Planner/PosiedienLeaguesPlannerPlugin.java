@@ -20,9 +20,17 @@ import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.ui.overlay.worldmap.WorldMapOverlay;
+import net.runelite.client.ui.overlay.worldmap.WorldMapPoint;
+import net.runelite.client.ui.overlay.worldmap.WorldMapPointManager;
+import java.awt.image.BufferedImage;
+import net.runelite.client.util.ImageUtil;
 
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
+
 
 @Slf4j
 @PluginDescriptor(
@@ -37,6 +45,25 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 
 	@Inject
 	private LeaguesPlannerConfig config;
+
+	@Inject
+	private WorldMapPointManager worldMapPointManager;
+
+	@Inject
+	private WorldMapOverlay worldMapOverlay;
+
+
+	private Point LastMenuOpenedPoint;
+
+	public List<LeagueRegionBounds> RegionBounds;
+
+	public LeagueRegionBounds CurrentRegion;
+
+
+
+	public WorldPoint LastDisplayedWorldPoint;
+
+	private static final BufferedImage MARKER_IMAGE = ImageUtil.getResourceStreamFromClass(PosiedienLeaguesPlannerPlugin.class, "/marker.png");
 
 	@Override
 	protected void startUp() throws Exception
@@ -68,7 +95,8 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 	@Subscribe
 	public void onMenuOpened(MenuOpened event)
 	{
-		//log.info("TEST!");
+		//log.info("TEST! 3");
+		LastMenuOpenedPoint = client.getMouseCanvasPosition();
 	}
 
 	@Subscribe
@@ -86,25 +114,98 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 			return;
 		}
 
-		//log.info("TEST! 3");
-		addMenuEntry(event, "Show Coordinate");
+		if (map.getBounds().contains(client.getMouseCanvasPosition().getX(), client.getMouseCanvasPosition().getY()))
+		{
+			addMenuEntries(event);
+		}
 	}
 
-	private void addMenuEntry(MenuEntryAdded event, String option)
+	private WorldPoint CalculateMapPoint(Point point)
+	{
+		float zoom = client.getRenderOverview().getWorldMapZoom();
+		RenderOverview renderOverview = client.getRenderOverview();
+		final WorldPoint mapPoint = new WorldPoint(renderOverview.getWorldMapPosition().getX(), renderOverview.getWorldMapPosition().getY(), 0);
+		final Point middle = worldMapOverlay.mapWorldPointToGraphicsPoint(mapPoint);
+
+		final int dx = (int) ((point.getX() - middle.getX()) / zoom);
+		final int dy = (int) ((-(point.getY() - middle.getY())) / zoom);
+
+		return mapPoint.dx(dx).dy(dy);
+	}
+
+	private final Consumer<MenuEntry> SetNextRegionPointEntryCallback = n ->
+	{
+		//worldMapPointManager.removeIf(x -> x == CurrentMarker);
+
+		//CurrentMarker = new WorldMapPoint(LastDisplayedWorldPoint, MARKER_IMAGE);
+		//CurrentMarker.setTarget(CurrentMarker.getWorldPoint());
+		//CurrentMarker.setJumpOnClick(true);
+		//CurrentMarker.setName("Custom Coordinate: " + LastDisplayedWorldPoint);
+		//worldMapPointManager.add(CurrentMarker);
+	};
+
+	private final Consumer<MenuEntry> SetActiveRegionPointEntryCallback = n ->
+	{
+	};
+
+	private final Consumer<MenuEntry> DeleteRegionPointEntryCallback = n ->
+	{
+	};
+
+	private void addMenuEntries(MenuEntryAdded event)
 	{
 		List<MenuEntry> entries = new LinkedList<>(Arrays.asList(client.getMenuEntries()));
 
-		if (entries.stream().anyMatch(e -> e.getOption().equals(option))) {
-			return;
+		LastDisplayedWorldPoint = CalculateMapPoint(client.isMenuOpen() ? LastMenuOpenedPoint : client.getMouseCanvasPosition());
+
+		String nextOption = "Set Next Region Point";
+		String finalNextOption1 = nextOption;
+		if (entries.stream().noneMatch(e -> e.getOption().equals(finalNextOption1)))
+		{
+			MenuEntry SetNextRegionPointEntry = client.createMenuEntry(-1);
+			SetNextRegionPointEntry.setOption(nextOption);
+			SetNextRegionPointEntry.setTarget(event.getTarget());
+			SetNextRegionPointEntry.setType(MenuAction.RUNELITE);
+			SetNextRegionPointEntry.onClick(this.SetNextRegionPointEntryCallback);
+			entries.add(0, SetNextRegionPointEntry);
+		}
+
+		nextOption = "Set Active Region Point";
+		String finalNextOption2 = nextOption;
+		if (entries.stream().noneMatch(e -> e.getOption().equals(finalNextOption2)))
+		{
+			MenuEntry SetActiveRegionPointEntry = client.createMenuEntry(-1);
+			SetActiveRegionPointEntry.setOption(nextOption);
+			SetActiveRegionPointEntry.setTarget(event.getTarget());
+			SetActiveRegionPointEntry.setType(MenuAction.RUNELITE);
+			SetActiveRegionPointEntry.onClick(this.SetActiveRegionPointEntryCallback);
+			entries.add(0, SetActiveRegionPointEntry);
+		}
+
+		nextOption = "Delete Region Point";
+		String finalNextOption3 = nextOption;
+		if (entries.stream().noneMatch(e -> e.getOption().equals(finalNextOption3)))
+		{
+			MenuEntry DeleteRegionPointEntry = client.createMenuEntry(-1);
+			DeleteRegionPointEntry.setOption(nextOption);
+			DeleteRegionPointEntry.setTarget(event.getTarget());
+			DeleteRegionPointEntry.setType(MenuAction.RUNELITE);
+			DeleteRegionPointEntry.onClick(this.DeleteRegionPointEntryCallback);
+			entries.add(0, DeleteRegionPointEntry);
 		}
 
 
+		nextOption = "Map Coordinate: " + LastDisplayedWorldPoint;
+		String finalNextOption = nextOption;
+		if (entries.stream().noneMatch(e -> e.getOption().equals(finalNextOption)))
+		{
+			MenuEntry MapCoordEntry = client.createMenuEntry(-1);
+			MapCoordEntry.setOption(nextOption);
+			MapCoordEntry.setTarget(event.getTarget());
+			MapCoordEntry.setType(MenuAction.RUNELITE);
+			entries.add(0, MapCoordEntry);
+		}
 
-		MenuEntry entry = new CustomMenuEntry();
-		entry.setOption(option);
-		entry.setTarget(event.getTarget());
-		entry.setType(MenuAction.of(MenuAction.RUNELITE.getId()));
-		entries.add(0, entry);
 
 		client.setMenuEntries(entries.toArray(new MenuEntry[0]));
 	}
