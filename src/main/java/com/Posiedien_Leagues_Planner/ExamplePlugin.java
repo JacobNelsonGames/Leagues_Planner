@@ -1,4 +1,4 @@
-package com.example;
+package com.Posiedien_Leagues_Planner;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
