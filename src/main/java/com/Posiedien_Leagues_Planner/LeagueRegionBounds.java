@@ -5,11 +5,15 @@ import java.util.*;
 
 public class LeagueRegionBounds
 {
-    public String RegionName;
+    public RegionType Type;
 
     // Basically a linked list of points
-    public List<LeagueRegionPoint> RegionPoints;
+    public HashMap<UUID, LeagueRegionPoint> RegionPoints = new HashMap<UUID, LeagueRegionPoint>();
 
     public LeagueRegionPoint CurrentFocusedPoint;
 
+    public LeagueRegionBounds(RegionType currentRegion)
+    {
+        Type = currentRegion;
+    }
 }
