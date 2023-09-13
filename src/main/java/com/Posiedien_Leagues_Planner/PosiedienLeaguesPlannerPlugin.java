@@ -2,7 +2,9 @@ package com.Posiedien_Leagues_Planner;
 
 import com.google.inject.Provides;
 
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import javax.swing.plaf.synth.Region;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -28,9 +30,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import net.runelite.client.util.ImageUtil;
 
+import java.io.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.Scanner;
 
 @Slf4j
 @PluginDescriptor(
@@ -64,6 +68,18 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 
 	public LeagueRegionPoint CurrentFocusedPoint;
 
+	void SaveRegionBounds() throws IOException
+	{
+		File targ = new File("RegionBoundData.csv");
+		config.RegionData.exportTo(targ);
+	}
+
+	void LoadRegionBounds() throws IOException
+	{
+		File targ = new File("RegionBoundData.csv");
+		config.RegionData.importFrom(targ);
+	}
+
 	private boolean GatherRegionBounds(WorldPointPolygon poly, ArrayList<RegionLine> regionLines, Set<UUID> VisitedPoints, LeagueRegionPoint nextPoint, LeagueRegionPoint parentPoint)
 	{
 		if (VisitedPoints.contains(nextPoint.GUID))
@@ -72,12 +88,12 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 			return true;
 		}
 		VisitedPoints.add(nextPoint.GUID);
-		WorldPoint end = nextPoint.OurPoint.getWorldPoint();
+		WorldPoint end = nextPoint.OurWorldPoint;
 		poly.AddWorldPoint(end);
 
 		if (parentPoint != null)
 		{
-			WorldPoint start = parentPoint.OurPoint.getWorldPoint();
+			WorldPoint start = parentPoint.OurWorldPoint;
 			regionLines.add(new RegionLine(start, end));
 		}
 
@@ -103,7 +119,7 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 	private void RefreshRegionBounds()
 	{
 		Set<UUID> VisitedPoints = new HashSet<>();
-		for (LeagueRegionBounds regionDatum : config.RegionData)
+		for (LeagueRegionBounds regionDatum : config.RegionData.RegionData)
 		{
 			Color DrawColor = regionDatum.Type.GetRegionColor(regionDatum.Type);
 			regionDatum.RegionPolygons.clear();
@@ -127,35 +143,35 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 		}
 	}
 
-	public void InitializeRegionData()
+	public void InitializeRegionData() throws Exception
 	{
-		if (config.RegionData.isEmpty())
+		config.RegionData.RegionData.clear();
+		for (RegionType CurrentRegion : RegionType.values())
 		{
-			config.RegionData.clear();
-			for (RegionType CurrentRegion : RegionType.values())
+			if (CurrentRegion == RegionType.NONE)
 			{
-				if (CurrentRegion == RegionType.NONE)
-				{
-					continue;
-				}
-
-				config.RegionData.add(new LeagueRegionBounds(CurrentRegion));
+				continue;
 			}
+
+			config.RegionData.RegionData.add(new LeagueRegionBounds(CurrentRegion));
 		}
 
+		LoadRegionBounds();
 		// Add all the serialized markers
-		for (LeagueRegionBounds CurrentRegion : config.RegionData)
+		for (LeagueRegionBounds LocalCurrentRegion : config.RegionData.RegionData)
 		{
-			CurrentRegion.RegionPoints.forEach((key, value) ->
+			LocalCurrentRegion.RegionPoints.forEach((key, value) ->
 			{
 				SetMarkerActivation(value, false);
 			});
 		}
+
+		RefreshRegionBounds();
 	}
 
 	public LeagueRegionBounds GetRegionBounds(RegionType Type)
 	{
-		for (LeagueRegionBounds CurrentBounds : config.RegionData)
+		for (LeagueRegionBounds CurrentBounds : config.RegionData.RegionData)
 		{
 			if (CurrentBounds.Type == Type)
 			{
@@ -217,14 +233,14 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 	{
 		InitializeRegionData();
 		overlayManager.add(regionBoundOverlay);
-		//log.info("Posiedien's Leagues Planner started!");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		SaveRegionBounds();
 		overlayManager.remove(regionBoundOverlay);
-		//log.info("Posiedien Leagues Planner stopped!");
+		worldMapPointManager.removeIf(x -> x.getName() != null && x.getName().contains("LP:"));
 	}
 
 	@Subscribe
@@ -324,20 +340,21 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 			worldMapPointManager.removeIf(x -> x == OldMarker);
 
 			WorldPoint WorldPointLocation;
-			if (OldMarker == null)
+			if (RegionPoint.OurWorldPoint == null)
 			{
 				WorldPointLocation = LastDisplayedWorldPoint;
 			}
 			else
 			{
-				WorldPointLocation = RegionPoint.OurPoint.getWorldPoint();
+				WorldPointLocation = RegionPoint.OurWorldPoint;
 			}
 
 			RegionPoint.OurPoint = new WorldMapPoint(WorldPointLocation, BOUNDS_SELECTED);
+			RegionPoint.OurWorldPoint = WorldPointLocation;
 			WorldMapPoint NewMarker = RegionPoint.OurPoint;
 			NewMarker.setTarget(WorldPointLocation);
 			NewMarker.setJumpOnClick(true);
-			NewMarker.setName("Region Bounds: " + RegionPoint.Region+ " " + WorldPointLocation + " guid:"+ RegionPoint.GUID);
+			NewMarker.setName("LP: Region Bounds: " + RegionPoint.Region+ " " + WorldPointLocation + " guid:"+ RegionPoint.GUID);
 			worldMapPointManager.add(NewMarker);
 		}
 		else
@@ -346,20 +363,21 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 			worldMapPointManager.removeIf(x -> x == OldMarker);
 
 			WorldPoint WorldPointLocation;
-			if (OldMarker == null)
+			if (RegionPoint.OurWorldPoint == null)
 			{
 				WorldPointLocation = LastDisplayedWorldPoint;
 			}
 			else
 			{
-				WorldPointLocation = RegionPoint.OurPoint.getWorldPoint();
+				WorldPointLocation = RegionPoint.OurWorldPoint;
 			}
 
 			RegionPoint.OurPoint = new WorldMapPoint(WorldPointLocation, GetRegionImage(RegionPoint.Region));
+			RegionPoint.OurWorldPoint = WorldPointLocation;
 			WorldMapPoint NewMarker = RegionPoint.OurPoint;
 			NewMarker.setTarget(WorldPointLocation);
 			NewMarker.setJumpOnClick(true);
-			NewMarker.setName("Region Bounds: " + RegionPoint.Region + " " + WorldPointLocation + " guid:"+ RegionPoint.GUID);
+			NewMarker.setName("LP: Region Bounds: " + RegionPoint.Region + " " + WorldPointLocation + " guid:"+ RegionPoint.GUID);
 			worldMapPointManager.add(NewMarker);
 		}
 	}
@@ -494,7 +512,7 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 
 		LastDisplayedWorldPoint = CalculateMapPoint(client.isMenuOpen() ? LastMenuOpenedPoint : client.getMouseCanvasPosition());
 		LastClickedRegionPoint = GetClickedRegionPoint(entries);
-		if (CurrentFocusedPoint != null && CurrentRegion.Type != CurrentFocusedPoint.Region)
+		if (CurrentFocusedPoint != null && CurrentRegion != null && CurrentRegion.Type != CurrentFocusedPoint.Region)
 		{
 			SetMarkerActivation(CurrentFocusedPoint, false);
 			CurrentFocusedPoint = null;

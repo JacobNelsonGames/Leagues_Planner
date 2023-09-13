@@ -74,7 +74,7 @@ public class RegionBoundOverlay extends Overlay
         WorldMapClipArea = ObtainWorldMapClipArea(client.getWidget(WidgetInfo.WORLD_MAP_VIEW).getBounds());
 
         // Display a line for all of our connections
-        for (LeagueRegionBounds regionDatum : config.RegionData)
+        for (LeagueRegionBounds regionDatum : config.RegionData.RegionData)
         {
             Color DrawColor = regionDatum.Type.GetRegionColor(regionDatum.Type);
             graphics.setColor(DrawColor);

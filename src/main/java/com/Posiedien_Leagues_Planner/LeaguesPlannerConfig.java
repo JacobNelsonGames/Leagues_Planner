@@ -14,7 +14,7 @@ import java.util.List;
 @ConfigGroup("LeaguePlanner")
 public interface LeaguesPlannerConfig extends Config
 {
-	public ArrayList<LeagueRegionBounds> RegionData = new ArrayList<>();
+	public FullRegionData RegionData = new FullRegionData();
 
 	@ConfigItem(
 			keyName = "GetEditRegion",
@@ -25,4 +25,5 @@ public interface LeaguesPlannerConfig extends Config
 	{
 		return RegionType.NONE;
 	}
+
 }
