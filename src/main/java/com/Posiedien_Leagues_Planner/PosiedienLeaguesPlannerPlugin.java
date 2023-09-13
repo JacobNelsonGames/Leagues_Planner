@@ -314,6 +314,11 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 
 	private WorldPoint CalculateMapPoint(Point point)
 	{
+		if (point == null)
+		{
+			return null;
+		}
+
 		float zoom = client.getRenderOverview().getWorldMapZoom();
 		RenderOverview renderOverview = client.getRenderOverview();
 		final WorldPoint mapPoint = new WorldPoint(renderOverview.getWorldMapPosition().getX(), renderOverview.getWorldMapPosition().getY(), 0);
@@ -511,6 +516,11 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 		List<MenuEntry> entries = new LinkedList<>(Arrays.asList(event.getMenuEntries()));
 
 		LastDisplayedWorldPoint = CalculateMapPoint(client.isMenuOpen() ? LastMenuOpenedPoint : client.getMouseCanvasPosition());
+		if (LastDisplayedWorldPoint == null)
+		{
+			return;
+		}
+
 		LastClickedRegionPoint = GetClickedRegionPoint(entries);
 		if (CurrentFocusedPoint != null && CurrentRegion != null && CurrentRegion.Type != CurrentFocusedPoint.Region)
 		{
