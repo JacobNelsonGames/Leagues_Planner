@@ -323,6 +323,10 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 		RenderOverview renderOverview = client.getRenderOverview();
 		final WorldPoint mapPoint = new WorldPoint(renderOverview.getWorldMapPosition().getX(), renderOverview.getWorldMapPosition().getY(), 0);
 		final Point middle = worldMapOverlay.mapWorldPointToGraphicsPoint(mapPoint);
+		if (middle == null)
+		{
+			return null;
+		}
 
 		final int dx = (int) ((point.getX() - middle.getX()) / zoom);
 		final int dy = (int) ((-(point.getY() - middle.getY())) / zoom);
