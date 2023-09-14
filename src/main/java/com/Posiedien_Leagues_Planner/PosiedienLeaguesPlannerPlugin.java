@@ -496,7 +496,7 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 			}
 
 			String TargetString = CurrentEntry.getTarget();
-			if (TargetString.contains("Region Bounds: "))
+			if (CurrentRegion != null && TargetString.contains("Region Bounds: "))
 			{
 				int index = TargetString.indexOf("guid:");
 
