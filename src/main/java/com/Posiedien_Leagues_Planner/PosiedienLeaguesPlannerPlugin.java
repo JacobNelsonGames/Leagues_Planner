@@ -14,6 +14,7 @@ import net.runelite.api.Point;
 import net.runelite.api.events.*;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 
 import net.runelite.api.*;
@@ -80,6 +81,30 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 		config.RegionData.importFrom(targ);
 	}
 
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		CurrentRegion = GetRegionBounds(config.GetEditRegion());
+		if (event.getKey().equals("GetEditRegion"))
+		{
+			if (config.GetEditRegion() == RegionType.NONE)
+			{
+				worldMapPointManager.removeIf(x -> x.getName() != null && x.getName().contains("LP: Region Bounds:"));
+			}
+			else
+			{
+				// Add all the serialized markers
+				for (LeagueRegionBounds LocalCurrentRegion : config.RegionData.RegionData)
+				{
+					LocalCurrentRegion.RegionPoints.forEach((key, value) ->
+					{
+						SetMarkerActivation(value, false);
+					});
+				}
+			}
+		}
+	}
+
 	private boolean GatherRegionBounds(WorldPointPolygon poly, ArrayList<RegionLine> regionLines, Set<UUID> VisitedPoints, LeagueRegionPoint nextPoint, LeagueRegionPoint parentPoint)
 	{
 		if (VisitedPoints.contains(nextPoint.GUID))
@@ -121,7 +146,7 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 		Set<UUID> VisitedPoints = new HashSet<>();
 		for (LeagueRegionBounds regionDatum : config.RegionData.RegionData)
 		{
-			Color DrawColor = regionDatum.Type.GetRegionColor(regionDatum.Type);
+			Color DrawColor = RegionType.GetRegionColor(config, regionDatum.Type);
 			regionDatum.RegionPolygons.clear();
 			regionDatum.RegionLines.clear();
 
@@ -138,6 +163,7 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 				if (GatherRegionBounds(newPolygon, regionDatum.RegionLines, VisitedPoints, value, null))
 				{
 					regionDatum.RegionPolygons.add(newPolygon);
+					newPolygon.CacheWorldPoly();
 				}
 			});
 		}
@@ -336,6 +362,11 @@ public class PosiedienLeaguesPlannerPlugin extends Plugin
 
 	private final void SetMarkerActivation(LeagueRegionPoint RegionPoint, boolean shouldActivate)
 	{
+		if (config.GetEditRegion() == RegionType.NONE)
+		{
+			return;
+		}
+
 		if (shouldActivate)
 		{
 			if (CurrentFocusedPoint != null)

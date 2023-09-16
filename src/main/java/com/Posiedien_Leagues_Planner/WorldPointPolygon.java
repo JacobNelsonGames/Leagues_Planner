@@ -12,6 +12,20 @@ import java.util.ArrayList;
 public class WorldPointPolygon
 {
     ArrayList<WorldPoint> WorldPoints = new ArrayList<>();
+    Polygon WorldPoly = new Polygon();
+    int WorldPolyZ = 0;
+
+    public void CacheWorldPoly()
+    {
+        WorldPoly.reset();
+        for (WorldPoint currentPoint : WorldPoints)
+        {
+            WorldPoly.addPoint(currentPoint.getX(), currentPoint.getY());
+
+            // Should be all the same
+            WorldPolyZ = currentPoint.getPlane();
+        }
+    }
 
     void AddWorldPoint(WorldPoint newWorldPoint)
     {

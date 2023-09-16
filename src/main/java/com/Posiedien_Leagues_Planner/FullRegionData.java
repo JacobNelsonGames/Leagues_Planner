@@ -2,7 +2,11 @@ package com.Posiedien_Leagues_Planner;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.runelite.api.Tile;
+import net.runelite.api.World;
+import net.runelite.api.coords.WorldPoint;
 
+import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +16,50 @@ import java.util.UUID;
 public class FullRegionData
 {
     public ArrayList<LeagueRegionBounds> RegionData = new ArrayList<>();
+
+    boolean IsTileInUnlockedRegion(LeaguesPlannerConfig config, WorldPoint TileLocation)
+    {
+        ArrayList<RegionType> RegionsForTile = GetTileRegions(TileLocation);
+
+        // If not in any region, that means it available for all reasons
+        if (!RegionsForTile.isEmpty())
+        {
+            for (RegionType regionType : RegionsForTile)
+            {
+                if (RegionType.GetRegionUnlocked(config, regionType))
+                {
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public ArrayList<RegionType> GetTileRegions(WorldPoint TileLocation)
+    {
+        ArrayList<RegionType> OutRegions = new ArrayList<RegionType>();
+        for (LeagueRegionBounds regionDatum : RegionData)
+        {
+            ArrayList<WorldPointPolygon> RegionPolygons = regionDatum.RegionPolygons;
+            for (WorldPointPolygon regionPolygon : RegionPolygons)
+            {
+                Polygon WorldPoly = regionPolygon.WorldPoly;
+                int WorldPolyZ = regionPolygon.WorldPolyZ;
+                if (WorldPolyZ == TileLocation.getPlane() && WorldPoly.contains(TileLocation.getX(), TileLocation.getY()))
+                {
+                    OutRegions.add(regionDatum.Type);
+                    break;
+                }
+            }
+        }
+
+        return OutRegions;
+    }
 
     public void exportTo(File file) throws IOException
     {

@@ -16,32 +16,85 @@ public enum RegionType
     TIRANNWN,
     DESERT;
 
-    public Color GetRegionColor(RegionType Type)
+    static public boolean GetRegionUnlocked(LeaguesPlannerConfig config, RegionType Type)
     {
         switch (Type)
         {
             case MISTHALIN:
-                return new Color(255, 2, 2, 100);
+                return config.MisthalinUnlocked();
             case KARAMJA:
-                return new Color(46, 108, 23, 100);
+                return config.KaramjaUnlocked();
             case KANDARIN:
-                return new Color(231, 143, 10, 100);
+                return config.KandarinUnlocked();
             case ASGARNIA:
-                return new Color(46, 59, 234, 100);
+                return config.AsgarniaUnlocked();
             case FREMENNIK:
-                return new Color(121, 67, 3, 100);
+                return config.FremennikUnlocked();
             case KOUREND:
-                return new Color(31, 224, 179, 100);
+                return config.KourendUnlocked();
             case WILDERNESS:
-                return new Color(94, 14, 14, 100);
+                return config.WildernessUnlocked();
             case MORYTANIA:
-                return new Color(102, 3, 114, 100);
+                return config.MorytaniaUnlocked();
             case TIRANNWN:
-                return new Color(130, 255, 105, 100);
+                return config.TirannwnUnlocked();
             case DESERT:
-                return new Color(255, 226, 1, 100);
+                return config.DesertUnlocked();
         }
 
-        return Color.WHITE;
+        return false;
+    }
+
+    static public Color GetRegionColor(LeaguesPlannerConfig config, RegionType Type)
+    {
+        Color OutColor = Color.WHITE;
+
+        switch (Type)
+        {
+            case MISTHALIN:
+                OutColor = config.MisthalinColor();
+                break;
+            case KARAMJA:
+                OutColor = config.KaramjaColor();
+                break;
+            case KANDARIN:
+                OutColor = config.KandarinColor();
+                break;
+            case ASGARNIA:
+                OutColor = config.AsgarniaColor();
+                break;
+            case FREMENNIK:
+                OutColor = config.FremennikColor();
+                break;
+            case KOUREND:
+                OutColor = config.KourendColor();
+                break;
+            case WILDERNESS:
+                OutColor = config.WildernessColor();
+                break;
+            case MORYTANIA:
+                OutColor = config.MorytaniaColor();
+                break;
+            case TIRANNWN:
+                OutColor = config.TirannwnColor();
+                break;
+            case DESERT:
+                OutColor = config.DesertColor();
+                break;
+        }
+
+        int DebugColorAlpha = 0;
+        if (!GetRegionUnlocked(config, Type))
+        {
+            OutColor = new Color(42, 42, 42,100);
+            DebugColorAlpha = Math.max(0, Math.min(config.DebugColorDisabledAlpha(), 255));
+        }
+        else
+        {
+            DebugColorAlpha = Math.max(0, Math.min(config.DebugColorAlpha(), 255));
+        }
+
+        OutColor = new Color(OutColor.getRed(), OutColor.getGreen(), OutColor.getBlue(), DebugColorAlpha);
+        return OutColor;
     }
 }

@@ -67,19 +67,23 @@ public class RegionBoundOverlay extends Overlay
             return null;
         }
         WorldMapClipArea = ObtainWorldMapClipArea(client.getWidget(WidgetInfo.WORLD_MAP_VIEW).getBounds());
+        graphics.setClip(WorldMapClipArea);
 
         // Display a line for all of our connections
         for (LeagueRegionBounds regionDatum : config.RegionData.RegionData)
         {
-            Color DrawColor = regionDatum.Type.GetRegionColor(regionDatum.Type);
+            Color DrawColor = RegionType.GetRegionColor(config, regionDatum.Type);
             graphics.setColor(DrawColor);
 
-            for (RegionLine line : regionDatum.RegionLines)
+            if (config.GetEditRegion() != RegionType.NONE)
             {
-                GraphicsLine convertedLine = line.ConvertToGraphicsLine(worldMapOverlay, WorldMapClipArea);
-                if (convertedLine != null)
+                for (RegionLine line : regionDatum.RegionLines)
                 {
-                    graphics.drawLine(convertedLine.x1, convertedLine.y1, convertedLine.x2, convertedLine.y2);
+                    GraphicsLine convertedLine = line.ConvertToGraphicsLine(worldMapOverlay, WorldMapClipArea);
+                    if (convertedLine != null)
+                    {
+                        graphics.drawLine(convertedLine.x1, convertedLine.y1, convertedLine.x2, convertedLine.y2);
+                    }
                 }
             }
 
