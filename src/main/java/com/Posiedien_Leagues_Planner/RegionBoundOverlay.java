@@ -30,10 +30,10 @@ public class RegionBoundOverlay extends Overlay
     private Area WorldMapClipArea;
 
     @Inject
-    public RegionBoundOverlay(Client Inclient, PosiedienLeaguesPlannerPlugin InposiedienLeaguesPlannerPlugin, LeaguesPlannerConfig Inconfig)
+    public RegionBoundOverlay(Client Inclient, PosiedienLeaguesPlannerPlugin InPlugin, LeaguesPlannerConfig Inconfig)
     {
         client = Inclient;
-        plugin = InposiedienLeaguesPlannerPlugin;
+        plugin = InPlugin;
         config = Inconfig;
 
         setPosition(OverlayPosition.DYNAMIC);
